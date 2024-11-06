@@ -61,10 +61,18 @@ podman build -t llamacppserver -f ./base/Containerfile .
 
 Deploy the model service
 
+The `podman run` command  below requires you to substitute the absolute path to the models folder for `<PATH>`. To find the value for `<PATH>`, run
+
+```bash
+cd ../../ # you should now be in the ai-lab-recipes directory
+pwd # copy this output to paste into the command below
+```
+
+
 ```python
 podman run --rm -it \
         -p 8001:8001 \
-        -v /<your path>/ai-lab-recipes/models:/ai-lab-recipes/models:ro,Z \
+        -v <PATH>/models:/ai-lab-recipes/models:ro,Z \
         -e MODEL_PATH=/ai-lab-recipes/models/granite-7b-lab-Q4_K_M.gguf \
         -e HOST=0.0.0.0 \
         -e PORT=8001 \
