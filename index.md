@@ -2,8 +2,7 @@
 title: Home
 ---
 
-# LLMs 101: Introductory Workshop (DevConf.US 2024)
-### Speakers: Aakanksha Duggal, Hema Veeradhi and Surya Prakash Pathak
+# DS219 -- HOMEWORK ASSIGNMENT
 
 <div class="toc" markdown="1">
 ## Contents:
