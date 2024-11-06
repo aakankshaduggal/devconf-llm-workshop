@@ -5,24 +5,19 @@ nav: true
 
 # Workshop Guide
 
-You can now follow these steps as we walk through the workshop. As mentioned in the `Intro` section, we will be setting up and experimenting with a RAG application using the ai-lab-recipe repository.
-
-## Step 1: Clone the repository
-
-Start by cloning the repository that contains the RAG application code. This repository hosts a variety of AI-related recipes, including the one for RAG.
-
-`git clone https://github.com/containers/ai-lab-recipes.git`
+Now that you've deployed the RAG application, it's time to try out an application on your own.
+You will deploy an audio-to-text application that utilizes whisper-cpp.
 
 
-## Step 2: Navigate to the RAG Application Directory
+## Step 1: Navigate to the Audio to Text Application Directory
 
-Once cloned, navigate to the specific directory for the RAG application. This directory contains all the necessary code and resources for setting up the RAG system.
+Navigate to the specific directory for the  application. This directory contains all the necessary code and resources for setting up the audio-to-text application.
 
-`cd ai-lab-recipes/recipes/natural_language_processing/rag/app`
+`cd ai-lab-recipes/recipes/audio/audio_to_text/app`
 
-## Step 3: Install Requirements
+## Step 2: Install Requirements
 
-We will need to install all the packages, libraries and dependencies required to run the RAG application. These are defined in the `requirements.txt` file.
+We will need to install all the packages, libraries and dependencies required to run the application. These are defined in the `requirements.txt` file.
 
 Let's first start a Python virtual env and install the dependencies within this virtual env.
 
@@ -35,7 +30,9 @@ Now, lets install all the packages:
 
 `pip install -r requirements.txt`
 
-## Step 4: Download Model
+## Step 3: Download Model
+
+If you've already downloaded `granite-7b`, skip this step.
 
 For this workshop, we recommend using the `granite-7b` lab model. It’s a well performing open sourced mid-sized model licensed under Apache-2.0 and served in the GGUF format.
 
@@ -46,27 +43,12 @@ cd ../../../../models
 curl -sLO https://huggingface.co/instructlab/granite-7b-lab-GGUF/resolve/main/granite-7b-lab-Q4_K_M.gguf
 ```
 
-This step will take a couple of minutes. After downloading, you will see the model in your directory, ready to be used in the RAG setup.
+This step will take a couple of minutes. After downloading, you will see the model in your directory, ready to be used in the setup.
 
-## Step 5:  Deploy the Vector Database
 
-A vector database is essential for the retrieval part of the RAG application. It stores vector representations of documents that can be quickly searched.
+## Step 4: Start the Model Service
 
-We will use Chromadb for this workshop. To deploy the Vector database service locally, simply use the Chromadb image. The vector database is ephemeral and will need to be re-populated each time the container restarts.
-
-In order to deploy, you can run the following:
-
-```python
-cd ../recipes/natural_language_processing/rag/app
-podman pull chromadb/chroma 
-podman run --rm -it -p 8000:8000 chroma 
-```
-
-Ensure the vector database is running and note the live endpoint. This will be used to store and retrieve document vectors.
-
-## Step 6: Start the Model Service
-
-In order to deploy the model service, first, open a new terminal (make sure the chromadb is still running) and navigate to the ai-labs-recipe repository that you have cloned.
+In order to deploy the model service, first, open a new terminal and navigate to the ai-labs-recipe repository that you have cloned.
 The model service is responsible for processing and generating text based on inputs and retrieved documents. We will use the llamacpp_python model service for this. Navigate to the model service directory:
 
 `cd ai-lab-recipes/model_servers/llamacpp_python`
@@ -90,49 +72,48 @@ podman run --rm -it \
 
 ```
 
-**OR**
+## Step 5: Build the Audio to Text Application
 
-You can skip this step if you are unable to download the model GGUF file due to **SLOW INTERNET**, and instead use some of the model services we have running which you can interact with. To do this, replace the `rag_app.py` line [here](https://github.com/containers/ai-lab-recipes/blob/main/recipes/natural_language_processing/rag/app/rag_app.py#L13) as follows:
+Now that the Model Service is running we'll build and deploy our AI Application. Use the provided Containerfile to build the AI Application
+image from the [`audio-to-text/`](./) directory.
 
-```python
-model_service = os.getenv("MODEL_ENDPOINT","https://tinyurl.com/devconf-model")
+
+```bash
+# from path recipes/audio/audio_to_text from repo containers/ai-lab-recipes
+podman build -t audio-to-text app
 ```
 
-```python
-model_service = os.getenv("MODEL_ENDPOINT","https://tinyurl.com/devconf-model2")
+### Step 6: Deploy the AI Application
+
+Make sure the Model Service is up and running before starting this container image.
+When starting the AI Application container image we need to direct it to the correct `MODEL_ENDPOINT`.
+This could be any appropriately hosted Model Service (running locally or in the cloud) using a compatible API.
+The following Podman command can be used to run your AI Application:
+
+
+```bash
+podman run --rm -it -p 8501:8501 -e MODEL_ENDPOINT=http://10.88.0.1:8001/inference audio-to-text
 ```
 
-Once you have modified this line, save the file and proceed to the next step.
+### Interact with the AI Application
 
-## Step 7: Start the Streamlit app
+Once the streamlit application is up and running, you should be able to access it at `http://localhost:8501`.
+From here, you can upload audio files from your local machine and translate the audio files as shown below.
 
-Now, open a new terminal window to run the Streamlit UI application. Here we will run the Streamlit application that ties everything together. This app provides the user interface to interact with the RAG system.
+By using this recipe and getting this starting point established,
+users should now have an easier time customizing and building their own AI enabled applications.
 
-In a new terminal, navigate back to RAG app directory:
+#### Input audio files
 
-`cd ai-lab-recipes/recipes/natural_language_processing/rag/app`
+Whisper.cpp requires as an input 16-bit WAV audio files.
+To convert your input audio files to 16-bit WAV format you can use `ffmpeg` like this:
 
-Run the Streamlit app:
+```bash
+ffmpeg -i <input.mp3> -ar 16000 -ac 1 -c:a pcm_s16le <output.wav>
+```
 
-`streamlit run rag_app.py`
-
-**_Note_**: If you run into `AxiosError: Request failed with status code 403`, try doing the following:
-
-- Create a new folder `.streamlit` inside the `/app` directory
-- Create a `config.toml` file and add the following lines to it:
-  ```python
-  [server]
-  enableXsrfProtection = false
-  enableCORS = false
-  ```
-
-Once the application is running, you can upload your choice of documents and start asking questions related to them. The RAG system will use the uploaded documents to provide more accurate and contextually relevant answers.
-
-#### Congrats!! You have now successfully setup a LLM RAG application locally on your laptop using containerization techniques 🥳
+#### Congrats!! You have now successfully setup a LLM application locally on your laptop using containerization techniques 🥳
 #### Give yourself a pat on the back!! 👏
-
-
-
 
 
 
