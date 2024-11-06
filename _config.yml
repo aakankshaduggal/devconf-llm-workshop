@@ -19,7 +19,7 @@ pub_year: 2024
 github_username: aakankshaduggal
 
 # add the full url for the github repository
-repo: "https://github.com/aakankshaduggal/devconf-llm-workshop/"
+repo: "https://github.com/aakankshaduggal/llm-workshop/"
 
 # site urls
 # Optional if using GitHub Pages! If building manually, these must be set correctly.
